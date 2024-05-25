@@ -1,0 +1,60 @@
+
+import itertools
+from decimal import Decimal
+import time
+
+
+question = {
+    'total_assets': 2.0, 
+    'pools': {
+        '0': {'pool_id': '0', 'base_rate': 0.03, 'base_slope': 0.066, 'kink_slope': 0.802, 'optimal_util_rate': 0.75, 'borrow_amount': 0.75, 'reserve_size': 1.0}, 
+        '1': {'pool_id': '1', 'base_rate': 0.04, 'base_slope': 0.046, 'kink_slope': 0.566, 'optimal_util_rate': 0.9, 'borrow_amount': 0.65, 'reserve_size': 1.0}, 
+        '2': {'pool_id': '2', 'base_rate': 0.01, 'base_slope': 0.087, 'kink_slope': 0.232, 'optimal_util_rate': 0.85, 'borrow_amount': 0.7, 'reserve_size': 1.0}, 
+        '3': {'pool_id': '3', 'base_rate': 0.02, 'base_slope': 0.011, 'kink_slope': 0.205, 'optimal_util_rate': 0.85, 'borrow_amount': 0.75, 'reserve_size': 1.0}, 
+        '4': {'pool_id': '4', 'base_rate': 0.02, 'base_slope': 0.079, 'kink_slope': 0.317, 'optimal_util_rate': 0.8, 'borrow_amount': 0.75, 'reserve_size': 1.0}, 
+        '5': {'pool_id': '5', 'base_rate': 0.03, 'base_slope': 0.013, 'kink_slope': 0.876, 'optimal_util_rate': 0.9, 'borrow_amount': 0.75, 'reserve_size': 1.0}, 
+        '6': {'pool_id': '6', 'base_rate': 0.02, 'base_slope': 0.01, 'kink_slope': 0.582, 'optimal_util_rate': 0.9, 'borrow_amount': 0.75, 'reserve_size': 1.0}, 
+        '7': {'pool_id': '7', 'base_rate': 0.05, 'base_slope': 0.077, 'kink_slope': 0.497, 'optimal_util_rate': 0.7, 'borrow_amount': 0.75, 'reserve_size': 1.0}, 
+        '8': {'pool_id': '8', 'base_rate': 0.04, 'base_slope': 0.033, 'kink_slope': 0.383, 'optimal_util_rate': 0.65, 'borrow_amount': 0.6, 'reserve_size': 1.0}, 
+        '9': {'pool_id': '9', 'base_rate': 0.05, 'base_slope': 0.029, 'kink_slope': 0.244, 'optimal_util_rate': 0.7, 'borrow_amount': 0.75, 'reserve_size': 1.0}
+    }
+}
+
+
+def generate_allocations(num_pools, total_assets, increment):
+    def recurse_allocations(current_allocations, remaining_assets, depth):
+        if depth == num_pools:
+            if round(sum(current_allocations), 2) == total_assets:
+                yield current_allocations
+            return
+        
+        start = 0 if depth == 0 else current_allocations[depth - 1]
+        for i in range(int(remaining_assets / increment) + 1):
+            next_allocation = round(i * increment, 2)
+            if depth == num_pools - 1:  # For the last pool, allocate all remaining assets
+                next_allocation = remaining_assets
+            new_remaining_assets = round(remaining_assets - next_allocation, 2)
+            if new_remaining_assets >= 0:
+                yield from recurse_allocations(current_allocations + [next_allocation], new_remaining_assets, depth + 1)
+            if depth == num_pools - 1:
+                break  # Avoid unnecessary iterations after allocating all to the last pool
+
+    return list(recurse_allocations([], total_assets, 0))
+
+
+num_pools = 10
+total_assets = 2.0
+increment = 0.4
+
+num_possible_allocs = 0
+
+start_time = time.time()
+all_possible_allocations = generate_allocations(num_pools, total_assets, increment)
+end_time = time.time()
+print(f"Time taken: {end_time - start_time} seconds")
+
+for allocation in all_possible_allocations:
+    num_possible_allocs += 1
+    # print(allocation)
+print(num_possible_allocs)
+
